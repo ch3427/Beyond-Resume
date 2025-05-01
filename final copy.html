@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beyond the Résumé</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/scrollama"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: #f7f7f7;
+      color: #333;
+      overflow-x: hidden; /* Prevent any accidental horizontal scroll globally */
+    }
+
+.horizontal-container {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  max-width: 100vw; /* instead of width: 100vw */
+}
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000; /* Make sure it stays above other elements */
+      text-align: center;
+      padding: 0.3rem;
+      background: #f7f7f7;
+      color: #fff;
+    }
+
+.header-logo {
+  max-width: 100px; /* adjust the size as needed */
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+    header p.intro {
+      font-size: 1.1rem;
+      margin-top: 1rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      color: #ccc;
+    }
+
+    .image-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Makes sure the image covers the whole area */
+}
+
+.overlay-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(50%, 900%);
+  color: black; /* or whatever color you want */
+  font-size: 2rem; /* adjust as needed */
+  font-weight: bold;
+}
+
+    .horizontal-container {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      width: 100vw;
+    }
+    .resume-step {
+      flex: 0 0 50vw;
+      scroll-snap-align: start;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+      transition: opacity 1s ease;
+    }
+    .resume {
+      background: #fff;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+    .resume h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .resume h3 {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+    .resume ul {
+      padding-left: 1.2rem;
+    }
+
+    .bias {
+  border-bottom: 1px dotted #888;
+  cursor: help;
+  background-color: rgba(22, 18, 211, 0.2); /* 0.2 = 20% opacity */
+}
+    .score-bar {
+      margin-top: 1rem;
+      height: 12px;
+      background: #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(to right, #9a8fff, #1612d3);
+    }
+    .bias-tooltip {
+      position: absolute;
+      background: #333;
+      color: #fff;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      max-width: 300px;
+      z-index: 1000;
+    }
+    .vertical-section {
+      max-width: 1000px;
+      margin: 4rem auto;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .scrolly-section {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .scroll__graphic, .scroll__graphic-right {
+      position: sticky;
+      top: 0;
+      width: 50%;
+      height: 100vh;
+      background: #fff;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .scroll__text {
+      width: 50%;
+    }
+    .scroll__text-right {
+      width: 50%;
+      order: -1;
+    }
+    .step {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 2rem;
+      font-size: 1.2rem;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    .candidate {
+      font-weight: bold;
+      font-size: 1.1rem;
+      transition: color 0.3s, opacity 0.3s;
+    }
+    .inactive {
+      color: #aaa;
+      opacity: 0.4;
+    }
+
+    .intro-steps {
+  width: 100vw;
+  max-width: 1200px;
+  margin: 0 auto;           
+  display: flex;
+  flex-direction: column;
+  align-items: center;         
+}
+.intro-steps .step {
+  min-height: 100vh;
+  padding: 4rem 2rem;
+  font-size: 1.6rem;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+    canvas {
+      max-width: 100%;
+    }
+    #calculator label, #calculator select {
+      display: block;
+      margin: 0.5rem auto;
+      font-size: 1rem;
+    }
+    #calculator select {
+      width: 60%;
+      padding: 0.5rem;
+    }
+    #score-output {
+      margin-top: 2rem;
+    }
+    #score-bar {
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    #score-fill {
+      height: 100%;
+      background: linear-gradient(to right, #9a8fff, #1612d3);
+      width: 85%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="step">
+    <div class="image-container">
+      <img src="beyond resume.png" alt="image1">
+    </div>
+  </div>
+
+  <header>
+    <img src="beyond resume.png" alt="Beyond the Resume" class="header-logo">
+  </header>
+
+  <main>
+
+    
+    <div class="intro-steps">
+      <div class="step" style="flex-direction: column; text-align: center;">
+        Artificial intelligence has rapidly transformed hiring practices, promising greater efficiency and objectivity. Approximately 75% of Fortune 500 companies now integrate AI tools like GPT-based models into their recruitment processes. However, this seemingly objective technology may unintentionally reinforce existing human biases, disproportionately disadvantaging candidates from historically underrepresented groups.
+    
+        <div style="margin-top: 2rem;">
+          <div style="position: relative; display: inline-block; margin-bottom: 1rem;">
+            <span style="font-weight: bold; font-size: 1.5rem; color: #1612d3;">
+              These tools don't create bias; they reflect and magnify our own.
+
+            </span>
+            
+          </div>    
+      </div>
+    </div>
+    
+    <div class="intro-steps">
+
+        <div class="step" style="flex-direction: column; text-align: center;"> While AI systems can quickly evaluate résumé elements such as names, educational institutions, and employer brands, they often amplify biases related to race, gender, and socioeconomic background. Everything presented in Beyond the Résumé is based on findings and data from:    
+        <div style="margin-top: 2rem;">
+          <div style="position: relative; display: inline-block; margin-bottom: 1rem;">
+            <span style="font-weight: bold; font-size: 1.5rem; color: #1612d3;">
+              <a href="https://arxiv.org/pdf/2405.04412">The Silicon Ceiling: Auditing GPT's Race and Gender Biases in Hiring.</a>  
+            </span>
+            <svg viewBox="0 0 100 10" preserveAspectRatio="none" 
+                 style="position: absolute; bottom: 0; left: 0; width: 100%; height: 10px;">
+              <path d="M0 5 Q25 0 50 5 T100 5" 
+                    stroke="#1612d3" 
+                    stroke-width="5" 
+                    fill="none" 
+                    stroke-linecap="round" />
+            </svg>
+          </div>    
+      </div>
+      </div> 
+      <div class="step">Beyond the Résumé invites us to rethink how we approach hiring. In a world where résumés, years of experience, and formal education often serve as the primary measures of a candidate’s worth, Beyond the Résumé challenges us to look beyond these traditional markers and focus on the skills and competencies that truly predict job success. Beyond the Résumé promotes evaluating candidates based on practical skills, better predicting job success and promoting inclusivity.</div>
+
+      <div class="step" style="min-height: auto; height: auto;"><img src="image3.png" alt="image" style="max-width: 100%; height: auto;">
+
+    </div>
+
+    </div>
+      <div class="intro-steps">
+
+      <div class="step">Explore detailed résumés from six qualified candidates. 
+        <br>
+      </br>Hover over highlighted elements to see how details like names, universities, employers, locations, and technology choices shape AI evaluations, influencing candidates from the very first screening.</div>
+
+
+  </div>
+
+    <div class="horizontal-container" id="resume-container">
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="Asian female names may receive lower ratings">Suni Tran</span></h2>
+      <p><span class="bias" title="Asian names were consistently rated lower than White names by GPT-4, especially for female-presenting candidates.">Candidate with Asian female identity</span></p>
+      <p><span class="bias" title="Non-coastal locations may be undervalued">123 Main Street, Anytown, USA</span></p>
+      <p>Email: suni.tran@example.com</p>
+      <p><span class="bias" title="Mid-tier university may be penalized">XYZ University — B.S. Computer Science, GPA: 3.8</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="Big tech company names like Google generally increase candidate scores, but this effect can be diminished for non-white or female candidates.">Google, Software Engineer (2018–Present)</span></p>
+      <ul>
+        <li>Designed and deployed scalable backend systems</li>
+        <li>Led cross-functional team of 6 engineers</li>
+        <li>Received internal award for innovation in AI safety tooling</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="GPT-4 gave higher ratings to resumes listing trendy or mainstream tech stacks.">Python</span>, <span class="bias" title="Go may not boost ratings unless paired with well-known companies.">Go</span>, <span class="bias" title="Mention of Kubernetes and cloud tools often increases scores.">Kubernetes, AWS, GCP</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 78%;"></div></div>
+      <p>Score: 78</p>
+    </div>
+  </section>
+
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="Black male names may be penalized">Darius Mosby</span></h2>
+      <p><span class="bias" title="Black male names were rated lower even with stronger qualifications.">Candidate with Black male identity</span></p>
+      <p>123 Main Street, Anytown, USA</p>
+      <p>Email: darius.mosby@example.com</p>
+      <p><span class="bias" title="Older graduation years led to lower evaluations">UCLA — B.S. Computer Science, Class of 1998</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="Lesser-known companies may result in lower scores">ABC Corp, Senior Developer (2018–Present)</span></p>
+      <ul>
+        <li>Refactored monolithic app into microservices</li>
+        <li>Mentored 4 junior developers</li>
+        <li>Championed diversity hiring initiatives</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="Older stacks like Java and SQL were undervalued">Java, Spring Boot, SQL, Docker</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 70%;"></div></div>
+      <p>Score: 70</p>
+    </div>
+  </section>
+
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="Hispanic female names may lower perceived fluency">Isabella Garcia</span></h2>
+      <p><span class="bias" title="Latinx-sounding names received lower interview recommendations.">Candidate with Hispanic female identity</span></p>
+      <p>456 Lake Drive, Austin, TX</p>
+      <p>Email: isabella.garcia@example.com</p>
+      <p><span class="bias" title="Graduates from non-Ivy public universities were scored lower.">University of Texas — B.S. Information Science, GPA 3.7</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="Prestigious tech companies help, but bias still applies.">Meta, Frontend Engineer (2019–Present)</span></p>
+      <ul>
+        <li>Built modular components with React</li>
+        <li>Improved ad dashboard performance by 45%</li>
+        <li>Hosted internal UX diversity workshops</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="Frontend tools were often underrated when associated with women.">JavaScript, TypeScript, Figma, Jest</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 74%;"></div></div>
+      <p>Score: 74</p>
+    </div>
+  </section>
+
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="Middle Eastern names sometimes signal immigration markers">Fatima Habibi</span></h2>
+      <p><span class="bias" title="Muslim-identifying names experienced increased rejection rates.">Candidate with Middle Eastern female identity</span></p>
+      <p>678 Oak Lane, Chicago, IL</p>
+      <p>Email: fatima.habibi@example.com</p>
+      <p><span class="bias" title="Master's degrees helped only when from elite universities.">University of Illinois — M.S. Data Science</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="Finance roles increase credibility but don't fully offset bias.">Capital One, Data Analyst (2020–Present)</span></p>
+      <ul>
+        <li>Built interactive credit risk dashboards</li>
+        <li>Automated monthly reporting using Python</li>
+        <li>Collaborated with compliance on fairness testing</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="Python and R received lower scores for female candidates">Python, R</span>, <span class="bias" title="Visualization tools helped when paired with elite firms">Tableau, SQL</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 72%;"></div></div>
+      <p>Score: 72</p>
+    </div>
+  </section>
+
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="White male names often get higher evaluations">James Smith</span></h2>
+      <p><span class="bias" title="White male names received the highest ratings.">Candidate with White male identity</span></p>
+      <p>999 West Blvd, San Francisco, CA</p>
+      <p>Email: james.smith@example.com</p>
+      <p><span class="bias" title="Elite school names significantly boosted scores.">Harvard — B.A. Economics, GPA 3.9</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="Leadership roles at elite firms received the highest ratings.">Stripe, Product Manager (2019–Present)</span></p>
+      <ul>
+        <li>Led launch of ML-driven fraud detection</li>
+        <li>Presented at 3 global fintech conferences</li>
+        <li>Managed team of 12 product and design staff</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="Leadership-oriented skills were rewarded more for white males.">SQL, Product Strategy, A/B Testing, JIRA</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 90%;"></div></div>
+      <p>Score: 90</p>
+    </div>
+  </section>
+
+  <section class="resume-step">
+    <div class="resume">
+      <h2><span class="bias" title="Foreign-sounding names from smaller towns may be doubly disadvantaged">Amina Yusuf</span></h2>
+      <p><span class="bias" title="Black Muslim female identities were impacted across multiple dimensions">Candidate with Black Muslim female identity</span></p>
+      <p>45 North Cedar St, Dayton, OH</p>
+      <p>Email: amina.yusuf@example.com</p>
+      <p><span class="bias" title="International or unknown university names reduced perceived quality">Al-Quds University — B.Sc. Software Engineering</span></p>
+      <h3>Experience</h3>
+      <p><span class="bias" title="NGO experience less favored than corporate roles">UNDP, Technology Fellow (2017–2021)</span></p>
+      <ul>
+        <li>Deployed humanitarian logistics platform across 3 countries</li>
+        <li>Led development team for refugee data system</li>
+        <li>Trained local staff in agile methods and security protocols</li>
+      </ul>
+      <h3>Skills</h3>
+      <p><span class="bias" title="Open-source stack experience was not consistently valued">Python, PostgreSQL, Docker, Django</span></p>
+      <div class="score-bar"><div class="score-fill" style="width: 69%;"></div></div>
+      <p>Score: 69</p>
+    </div>
+  </section>
+</div>
+
+<div class="intro-steps">
+  <div class="step">Subtle differences in how résumés are evaluated—based on names, schools, employers, or locations—can influence outcomes from the start. 
+    <br>
+  </br>
+  Follow how AI-driven evaluations shape each hiring stage—screening, shortlisting, and final offers—as small biases compound over time, favoring some candidates while sidelining others.</div>
+  </div>
+</div>
+
+<div class="scrolly-section">
+  <div class="scroll__graphic" id="funnel-viz">
+    <div id="candidates"></div>
+  </div>
+  <div class="scroll__text">
+    <div class="step">All six candidates submitted résumés. GPT-based hiring models immediately evaluate features like name, degree, graduation year, and employer brand. According to the paper, GPT-4 rated White male résumés significantly higher than others, even when experience and education were equal.</div>
+    <div class="step">Darius and Amina are deprioritized at the screening stage. Armstrong et al. found that Black male and Muslim-sounding names experienced a 10–20 point reduction in model-generated scores across otherwise equivalent résumés.</div>
+    <div class="step">The interview shortlist includes James and Isabella. Isabella's inclusion highlights how working at a prestige firm like Meta slightly mitigated identity bias. James consistently benefited from identity, employer, and education signals.</div>
+    <div class="step">James receives the final offer. The study found White male candidates were 2.75× more likely to receive job offers in LLM-based scoring pipelines, underscoring how compounding privileges result in biased hiring outcomes.</div>
+  </div>
+</div>
+
+<div class="intro-steps">
+  <div class="step">Early biases in hiring don't just affect who gets the job—they set the trajectory for long-term career and salary growth. 
+    <br>
+  </br>
+  Projected earnings over time show how initial advantages or disadvantages widen, compounding gaps with every job move and raise.</div>
+</div>
+
+<div class="scrolly-section">
+  <div class="scroll__text-right">
+    <div class="step" data-highlight="none">Projected compensation reflects systemic disparities embedded in AI scoring models. The initial salary projection assumes $150,000 × (score/100), with a 3% annual raise.</div>
+    <div class="step" data-highlight="none">Every three years, candidates are assumed to change jobs. When changing jobs, bias is reapplied, compounding advantages or disadvantages over time.</div>
+    <div class="step" data-highlight="Amina Yusuf,Darius Mosby">Amina and Darius, despite strong technical backgrounds, are projected to earn significantly less over 10 years. Bias during initial hiring and subsequent job changes reduces their total earnings substantially.</div>
+    <div class="step" data-highlight="Fatima Habibi,Suni Tran">Fatima and Suni, despite prestigious employers or advanced degrees, still face penalties over time due to race, gender, and region biases—affecting salary growth at every career move.</div>
+    <div class="step" data-highlight="James Smith">James Smith benefits the most from positive bias across all stages, leading to the highest cumulative earnings after 10 years.</div>
+  </div>
+  <div class="scroll__graphic-right">
+    <canvas id="salaryChart" width="600" height="400"></canvas>
+    <p class="note">Formula: <code>Start salary = $150,000 × (score / 100); +3% raise/year; bias reapplied at job changes (every 3 years)</code>.</p>
+  </div>
+</div>
+<script>
+  const funnelStages = [
+    ["Suni Tran", "Darius Mosby", "Isabella Garcia", "Fatima Habibi", "James Smith", "Amina Yusuf"],
+    ["Suni Tran", "Isabella Garcia", "Fatima Habibi", "James Smith"],
+    ["Isabella Garcia", "James Smith"],
+    ["James Smith"]
+  ];
+
+  const allCandidates = ["Suni Tran", "Darius Mosby", "Isabella Garcia", "Fatima Habibi", "James Smith", "Amina Yusuf"];
+
+  const baseSalaries = [117000, 105000, 111000, 108000, 135000, 103500];
+  const biasImpactPerJump = [0, -5000, -3000, -2000, 0, -7000]; // Simplified additional penalties on job changes
+
+  const computeTotalEarnings = (base, penalty) => {
+    let total = 0;
+    let salary = base;
+    for (let year = 1; year <= 10; year++) {
+      salary *= 1.03; // 3% raise each year
+      if (year % 3 === 0) salary += penalty; // Apply bias penalty every 3rd year
+      total += salary;
+    }
+    return Math.round(total);
+  };
+
+  const salaryTotals = baseSalaries.map((base, idx) => computeTotalEarnings(base, biasImpactPerJump[idx]));
+
+  const scroller = scrollama();
+  scroller.setup({ step: ".scroll__text .step", offset: 0.5 })
+    .onStepEnter(response => {
+      const stage = funnelStages[response.index];
+      const html = allCandidates.map(name => {
+        const isActive = stage.includes(name);
+        return `<div class="candidate${isActive ? '' : ' inactive'}">${name}</div>`;
+      }).join('');
+      document.getElementById("candidates").innerHTML = html;
+    });
+
+  const salaryCtx = document.getElementById("salaryChart").getContext("2d");
+  const defaultGray = '#ccc';
+  const highlightColor = '#1612d3';
+  let barColors = new Array(allCandidates.length).fill(defaultGray);
+
+  const salaryChart = new Chart(salaryCtx, {
+    type: 'bar',
+    data: {
+      labels: allCandidates,
+      datasets: [{
+        label: "Cumulative Total Earned (10 Years)",
+        data: salaryTotals,
+        backgroundColor: barColors,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 1500 },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: context => `$${context.parsed.y.toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "USD" }
+        }
+      }
+    }
+  });
+
+  const salaryScroller = scrollama();
+  salaryScroller.setup({ step: ".scroll__text-right .step", offset: 0.5 })
+    .onStepEnter(response => {
+      const highlights = response.element.getAttribute("data-highlight");
+      const newColors = allCandidates.map(name => highlights && highlights.includes(name) ? highlightColor : defaultGray);
+      salaryChart.data.datasets[0].backgroundColor = newColors;
+      salaryChart.update();
+    });
+</script>
+
+
+<div class="intro-steps">
+  <div class="step">Small hiring biases snowball into major career earnings gaps over time. What starts as a few points' difference can grow into six-figure disparities. 
+    <br>
+  </br>
+  Use the calculator to see how attributes like race, gender, education employer, graduation year, and English fluency shape AI evaluations long before interviews begin.  </div>
+  </div>
+</div>
+
+    <div class="vertical-section" id="calculator">
+      <h2>Bias Calculator</h2>
+      <p>Select candidate attributes to simulate AI score:</p>
+  
+      <label for="race">Race:</label>
+      <select id="race">
+        <option value="white">White</option>
+        <option value="black">Black</option>
+        <option value="asian">Asian</option>
+        <option value="latinx">Latinx</option>
+        <option value="middle_eastern">Middle Eastern</option>
+      </select>
+  
+      <label for="gender">Gender:</label>
+      <select id="gender">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="nonbinary">Nonbinary</option>
+      </select>
+  
+      <label for="education">University:</label>
+      <select id="education">
+        <option value="harvard">Harvard</option>
+        <option value="ucla">UCLA</option>
+        <option value="utexas">University of Texas</option>
+        <option value="uiuc">University of Illinois</option>
+        <option value="xyz">XYZ University</option>
+      </select>
+  
+      <label for="workplace">Employer:</label>
+      <select id="workplace">
+        <option value="google">Google</option>
+        <option value="stripe">Stripe</option>
+        <option value="meta">Meta</option>
+        <option value="capital_one">Capital One</option>
+        <option value="abc_corp">ABC Corp</option>
+      </select>
+  
+      <label for="gradYear">Graduation Year:</label>
+      <select id="gradYear">
+        <option value="after2015">After 2015</option>
+        <option value="2000_2015">2000–2015</option>
+        <option value="before2000">Before 2000</option>
+      </select>
+  
+      <label for="english">English Fluency:</label>
+      <select id="english">
+        <option value="native">Native</option>
+        <option value="fluent">Fluent</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="basic">Basic</option>
+      </select>
+  
+      <div id="score-output">
+        <div id="score-bar"><div id="score-fill"></div></div>
+        <p id="score-text">Estimated Score: 85</p>
+      </div>
+    </div>
+  
+    <div id="tooltip" class="bias-tooltip"></div>
+  
+    <script>
+      const raceBias = { white: 0, black: -1.2, asian: -1.0, middle_eastern: -1.5, latinx: -1.3 };
+      const genderBias = { male: 0, female: -0.7, nonbinary: -0.9 };
+      const educationBias = { harvard: 3, ucla: 0.5, utexas: 0, uiuc: 0, xyz: -1 };
+      const workplaceBias = { google: 2, stripe: 2, meta: 1.5, capital_one: 1, abc_corp: -0.5 };
+      const gradYearBias = { after2015: 0, '2000_2015': -0.5, before2000: -2 };
+      const englishBias = { native: 0, fluent: -0.5, intermediate: -1.5, basic: -3 };
+  
+      function calculateScore() {
+        const race = document.getElementById('race').value;
+        const gender = document.getElementById('gender').value;
+        const education = document.getElementById('education').value;
+        const workplace = document.getElementById('workplace').value;
+        const gradYear = document.getElementById('gradYear').value;
+        const english = document.getElementById('english').value;
+  
+        let score = 85;
+        score += raceBias[race];
+        score += genderBias[gender];
+        score += educationBias[education];
+        score += workplaceBias[workplace];
+        score += gradYearBias[gradYear];
+        score += englishBias[english];
+  
+        score = Math.max(0, Math.min(100, score));
+  
+        document.getElementById('score-fill').style.width = score + '%';
+        document.getElementById('score-text').textContent = `Estimated Score: ${score}`;
+      }
+  
+      ['race', 'gender', 'education', 'workplace', 'gradYear', 'english'].forEach(id => {
+        document.getElementById(id).addEventListener('change', calculateScore);
+      });
+  
+      calculateScore();
+    </script>
+
+<div class="intro-steps">
+  <div class="step" style="flex-direction: column; text-align: center;">
+    <div style="margin-top: 2rem;">
+      <div style="position: relative; display: inline-block; margin-bottom: 1rem;">
+        <span style="font-weight: bold; font-size: 1.5rem; color: #1612d3;">
+          Take a step beyond the résumés. See talent differently.
+        </span>
+
+        <div style="font-size: 1rem; margin-top: 1.5rem; line-height: 1.8;">
+          Find people with real potential who don't fit the usual mold<br>
+          Build teams that see problems from different angles<br>
+          Improve results through more complete perspectives<br>
+          Fill positions faster by focusing on what the job actually needs
+        </div>
+      </div>    
+    </div>
+  </div>
+</div>
+
+
+    
+  </main>
+
+</body>
+</html>
